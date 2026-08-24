@@ -14,7 +14,10 @@ export default async function FavoritosPage() {
     where: { userId: session.user.id },
     include: {
       property: {
-        include: { images: { orderBy: { order: "asc" }, take: 1 } },
+        include: {
+          images: { orderBy: { order: "asc" }, take: 1 },
+          reviews: { select: { rating: true } },
+        },
       },
     },
     orderBy: { createdAt: "desc" },

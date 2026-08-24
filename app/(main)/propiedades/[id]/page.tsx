@@ -9,7 +9,9 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { id } = await params;
 
   const property = await prisma.property.findUnique({
@@ -46,7 +48,13 @@ export default async function PropiedadPage({ params }: PageProps) {
 
   const property = await prisma.property.findUnique({
     where: { id },
-    include: { images: { orderBy: { order: "asc" } } },
+    include: {
+      images: { orderBy: { order: "asc" } },
+      reviews: {
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+    },
   });
 
   if (!property) {

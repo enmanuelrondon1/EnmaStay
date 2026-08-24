@@ -12,14 +12,15 @@ export default async function MiCuentaPage() {
   }
 
   const bookings = await prisma.booking.findMany({
-    where: { userId: session.user.id },
-    include: {
-      property: {
-        include: { images: { orderBy: { order: "asc" }, take: 1 } },
-      },
+  where: { userId: session.user.id },
+  include: {
+    review: { select: { id: true } },
+    property: {
+      include: { images: { orderBy: { order: "asc" }, take: 1 } },
     },
-    orderBy: { createdAt: "desc" },
-  });
+  },
+  orderBy: { createdAt: "desc" },
+});
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">

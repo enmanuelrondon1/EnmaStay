@@ -5,8 +5,11 @@ import { FeaturedProperties } from "@/components/site/featured-properties";
 
 export default async function HomePage() {
   const [properties, cityRows] = await Promise.all([
-    prisma.property.findMany({
-      include: { images: { orderBy: { order: "asc" }, take: 1 } },
+     prisma.property.findMany({
+      include: {
+        images: { orderBy: { order: "asc" }, take: 1 },
+        reviews: { select: { rating: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 6,
     }),

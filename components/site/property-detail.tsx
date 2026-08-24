@@ -3,6 +3,7 @@ import { PropertyGallery } from "@/components/site/property-gallery";
 import { PropertyMap } from "@/components/site/property-map-wrapper";
 import { BookingCalendar } from "@/components/site/booking-calendar";
 import { FavoriteButton } from "@/components/site/favorite-button";
+import { PropertyReviews } from "@/components/site/property-reviews";
 
 type PropertyDetailProps = {
   property: {
@@ -19,6 +20,13 @@ type PropertyDetailProps = {
     latitude: number;
     longitude: number;
     images: { url: string }[];
+    reviews: {
+      id: string;
+      rating: number;
+      comment: string | null;
+      createdAt: Date;
+      user: { name: string | null };
+    }[];
   };
 };
 
@@ -40,10 +48,10 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
         {property.address}
       </p>
 
-     <div className="relative mt-6">
-  <PropertyGallery images={property.images} title={property.title} />
-  <FavoriteButton propertyId={property.id} />
-</div>
+      <div className="relative mt-6">
+        <PropertyGallery images={property.images} title={property.title} />
+        <FavoriteButton propertyId={property.id} />
+      </div>
 
       <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -74,10 +82,12 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
               zoom={13}
             />
           </div>
+          <h2 className="mt-8 font-display text-xl text-ink">Reseñas</h2>
+          <PropertyReviews reviews={property.reviews} />
         </div>
 
         <div className="lg:col-span-1">
-        <div className="sticky top-24 rounded-lg border border-stone-300 bg-white p-4">
+          <div className="sticky top-24 rounded-lg border border-stone-300 bg-white p-4">
             <p className="font-mono text-2xl font-medium text-brass-dark">
               ${property.price}
               <span className="text-sm font-normal text-stone-600">

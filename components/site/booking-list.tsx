@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
+import { ReviewForm } from "@/components/site/review-form";
 
 type Booking = {
   id: string;
@@ -13,6 +14,7 @@ type Booking = {
   checkOut: Date;
   totalPrice: number;
   status: string;
+  review: { id: string } | null;
   property: {
     id: string;
     title: string;
@@ -22,6 +24,7 @@ type Booking = {
   };
 };
 
+
 const dateFormatter = new Intl.DateTimeFormat("es", {
   day: "numeric",
   month: "short",
@@ -30,7 +33,10 @@ const dateFormatter = new Intl.DateTimeFormat("es", {
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   CONFIRMED: { label: "Confirmada", className: "bg-teal/10 text-teal" },
-  PENDING: { label: "Pendiente de pago", className: "bg-brass/10 text-brass-dark" },
+  PENDING: {
+    label: "Pendiente de pago",
+    className: "bg-brass/10 text-brass-dark",
+  },
   CANCELLED: { label: "Cancelada", className: "bg-red-100 text-red-600" },
 };
 
@@ -39,20 +45,26 @@ export function BookingList({ bookings }: { bookings: Booking[] }) {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   async function handleCancel(id: string) {
-    if (!confirm("¿Cancelar esta reserva? Si ya la pagaste, se reembolsará automáticamente.")) {
+    if (
+      !confirm(
+        "¿Cancelar esta reserva? Si ya la pagaste, se reembolsará automáticamente.",
+      )
+    ) {
       return;
     }
 
     setCancellingId(id);
     try {
-      const res = await fetch(`/api/bookings/${id}/cancelar`, { method: "POST" });
-   if (!res.ok) {
-  const data = await res.json();
-  toast.error(data.error ?? "Error al cancelar");
-  return;
-}
-toast.success("Reserva cancelada");
-router.refresh();
+      const res = await fetch(`/api/bookings/${id}/cancelar`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error ?? "Error al cancelar");
+        return;
+      }
+      toast.success("Reserva cancelada");
+      router.refresh();
     } finally {
       setCancellingId(null);
     }
@@ -80,7 +92,8 @@ router.refresh();
           className: "bg-stone-300 text-stone-600",
         };
         const canCancel =
-          booking.status !== "CANCELLED" && new Date(booking.checkIn) > new Date();
+          booking.status !== "CANCELLED" &&
+          new Date(booking.checkIn) > new Date();
 
         return (
           <div
@@ -141,6 +154,10 @@ router.refresh();
                   )}
                 </div>
               </div>
+
+              {booking.status === "CONFIRMED" &&
+                new Date(booking.checkIn) <= new Date() &&
+                !booking.review && <ReviewForm bookingId={booking.id} />}
             </div>
           </div>
         );

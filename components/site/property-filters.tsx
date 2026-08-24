@@ -15,12 +15,16 @@ export function PropertyFilters({ cities }: PropertyFiltersProps) {
 
   const [city, setCity] = useState(searchParams.get("city") ?? "");
   const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") ?? "");
+  const [checkIn, setCheckIn] = useState(searchParams.get("checkIn") ?? "");
+  const [checkOut, setCheckOut] = useState(searchParams.get("checkOut") ?? "");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") ?? "");
   const [bedrooms, setBedrooms] = useState(searchParams.get("bedrooms") ?? "");
-  const [bathrooms, setBathrooms] = useState(searchParams.get("bathrooms") ?? "");
+  const [bathrooms, setBathrooms] = useState(
+    searchParams.get("bathrooms") ?? "",
+  );
   const [parkings, setParkings] = useState(searchParams.get("parkings") ?? "");
 
-  function applyFilters(e: React.FormEvent) {
+   function applyFilters(e: React.FormEvent) {
     e.preventDefault();
     const params = new URLSearchParams();
     if (city) params.set("city", city);
@@ -29,6 +33,8 @@ export function PropertyFilters({ cities }: PropertyFiltersProps) {
     if (bedrooms) params.set("bedrooms", bedrooms);
     if (bathrooms) params.set("bathrooms", bathrooms);
     if (parkings) params.set("parkings", parkings);
+    if (checkIn) params.set("checkIn", checkIn);
+    if (checkOut) params.set("checkOut", checkOut);
     router.push(`${pathname}?${params.toString()}`);
   }
 
@@ -39,16 +45,40 @@ export function PropertyFilters({ cities }: PropertyFiltersProps) {
     setBedrooms("");
     setBathrooms("");
     setParkings("");
+    setCheckIn("");
+    setCheckOut("");
     router.push(pathname);
   }
-
   return (
     <form
       onSubmit={applyFilters}
       className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-stone-300 bg-white p-4"
     >
+            <div>
+        <label className="block text-xs font-medium text-stone-600">Entrada</label>
+        <input
+          type="date"
+          value={checkIn}
+          onChange={(e) => setCheckIn(e.target.value)}
+          className="mt-1 rounded-md border border-stone-300 px-2 py-1.5 text-sm"
+        />
+      </div>
+
       <div>
-        <label className="block text-xs font-medium text-stone-600">Ciudad</label>
+        <label className="block text-xs font-medium text-stone-600">Salida</label>
+        <input
+          type="date"
+          value={checkOut}
+          onChange={(e) => setCheckOut(e.target.value)}
+          className="mt-1 rounded-md border border-stone-300 px-2 py-1.5 text-sm"
+        />
+      </div>
+
+   
+      <div>
+        <label className="block text-xs font-medium text-stone-600">
+          Ciudad
+        </label>
         <select
           value={city}
           onChange={(e) => setCity(e.target.value)}
@@ -64,7 +94,9 @@ export function PropertyFilters({ cities }: PropertyFiltersProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-stone-600">Precio mín.</label>
+        <label className="block text-xs font-medium text-stone-600">
+          Precio mín.
+        </label>
         <input
           type="number"
           min="0"
@@ -75,7 +107,9 @@ export function PropertyFilters({ cities }: PropertyFiltersProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-stone-600">Precio máx.</label>
+        <label className="block text-xs font-medium text-stone-600">
+          Precio máx.
+        </label>
         <input
           type="number"
           min="0"
@@ -86,7 +120,9 @@ export function PropertyFilters({ cities }: PropertyFiltersProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-stone-600">Habitaciones</label>
+        <label className="block text-xs font-medium text-stone-600">
+          Habitaciones
+        </label>
         <input
           type="number"
           min="0"
@@ -97,7 +133,9 @@ export function PropertyFilters({ cities }: PropertyFiltersProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-stone-600">Baños</label>
+        <label className="block text-xs font-medium text-stone-600">
+          Baños
+        </label>
         <input
           type="number"
           min="0"
@@ -108,7 +146,9 @@ export function PropertyFilters({ cities }: PropertyFiltersProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-stone-600">Estacionamientos</label>
+        <label className="block text-xs font-medium text-stone-600">
+          Estacionamientos
+        </label>
         <input
           type="number"
           min="0"

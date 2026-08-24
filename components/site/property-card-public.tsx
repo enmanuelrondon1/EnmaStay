@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FavoriteButton } from "@/components/site/favorite-button";
+import { Star } from "lucide-react";
 
 type PropertyCardPublicProps = {
   property: {
@@ -16,7 +17,12 @@ type PropertyCardPublicProps = {
     latitude: number;
     longitude: number;
     images: { url: string }[];
+    reviews?: { rating: number }[];
   };
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  compareSelected?: boolean;
+  onCompareToggle?: () => void;
 };
 
 function formatCoord(lat: number, lng: number) {
@@ -25,10 +31,18 @@ function formatCoord(lat: number, lng: number) {
   return `${Math.abs(lat).toFixed(3)}°${latDir} ${Math.abs(lng).toFixed(3)}°${lngDir}`;
 }
 
-export function PropertyCardPublic({ property }: PropertyCardPublicProps) {
+export function PropertyCardPublic({
+  property,
+  onMouseEnter,
+  onMouseLeave,
+  compareSelected,
+  onCompareToggle,
+}: PropertyCardPublicProps) {
   return (
     <Link
       href={`/propiedades/${property.id}`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className="group block overflow-hidden rounded-lg border border-stone-300 bg-white transition hover:shadow-md"
     >
       <div className="relative h-44 w-full bg-stone-300/40">
@@ -44,6 +58,22 @@ export function PropertyCardPublic({ property }: PropertyCardPublicProps) {
           {formatCoord(property.latitude, property.longitude)}
         </span>
         <FavoriteButton propertyId={property.id} />
+        {onCompareToggle && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onCompareToggle();
+            }}
+            className={`absolute right-2 top-11 z-10 flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-medium shadow-sm ${
+              compareSelected
+                ? "bg-brass text-ink"
+                : "bg-white/90 text-ink hover:bg-white"
+            }`}
+          >
+            {compareSelected ? "✓ Comparar" : "+ Comparar"}
+          </button>
+        )}
       </div>
       <div className="p-4">
         <h3 className="truncate font-display text-lg text-ink">
@@ -56,9 +86,20 @@ export function PropertyCardPublic({ property }: PropertyCardPublicProps) {
           {property.bedrooms} hab · {property.bathrooms} baños ·{" "}
           {property.parkings} estac.
         </p>
-        <p className="mt-2 font-mono text-sm font-medium text-brass-dark">
-          ${property.price} / noche
-        </p>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="font-mono text-sm font-medium text-brass-dark">
+            ${property.price} / noche
+          </p>
+          {property.reviews && property.reviews.length > 0 && (
+            <span className="flex items-center gap-1 text-xs text-stone-600">
+              <Star size={12} className="fill-brass text-brass" />
+              {(
+                property.reviews.reduce((sum, r) => sum + r.rating, 0) /
+                property.reviews.length
+              ).toFixed(1)}
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );

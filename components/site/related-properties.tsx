@@ -19,19 +19,25 @@ export async function RelatedProperties({
       id: { not: currentPropertyId },
       city,
     },
-    include: { images: { orderBy: { order: "asc" }, take: 1 } },
+    include: {
+      images: { orderBy: { order: "asc" }, take: 1 },
+      reviews: { select: { rating: true } },
+    },
     take: 3,
   });
 
   let related = sameCity;
 
   if (related.length < 3) {
-    const priceRange = await prisma.property.findMany({
+      const priceRange = await prisma.property.findMany({
       where: {
         id: { notIn: [currentPropertyId, ...related.map((p) => p.id)] },
         price: { gte: price * 0.6, lte: price * 1.4 },
       },
-      include: { images: { orderBy: { order: "asc" }, take: 1 } },
+      include: {
+        images: { orderBy: { order: "asc" }, take: 1 },
+        reviews: { select: { rating: true } },
+      },
       take: 3 - related.length,
     });
     related = [...related, ...priceRange];
