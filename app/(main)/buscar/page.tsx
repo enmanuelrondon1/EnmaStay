@@ -8,6 +8,8 @@ type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+const PAGE_SIZE = 8;
+
 export default async function BuscarPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const where = buildPropertyWhere(params);
@@ -17,7 +19,9 @@ export default async function BuscarPage({ searchParams }: PageProps) {
     where.id = { notIn: unavailableIds };
   }
 
-  const [properties, cityRows] = await Promise.all([
+  const currentPage = Math.max(1, Number(params.page) || 1);
+
+  const [properties, totalCount, cityRows] = await Promise.all([
     prisma.property.findMany({
       where,
       include: {
@@ -25,7 +29,10 @@ export default async function BuscarPage({ searchParams }: PageProps) {
         reviews: { select: { rating: true } },
       },
       orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     }),
+    prisma.property.count({ where }),
     prisma.property.findMany({
       distinct: ["city"],
       select: { city: true },
@@ -33,10 +40,16 @@ export default async function BuscarPage({ searchParams }: PageProps) {
     }),
   ]);
 
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <PropertyFilters cities={cityRows.map((c) => c.city)} />
-      <PropertyBrowser properties={properties} />
+      <PropertyBrowser
+        properties={properties}
+        currentPage={currentPage}
+        totalPages={totalPages}
+      />
     </div>
   );
 }

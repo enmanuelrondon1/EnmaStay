@@ -400,13 +400,7 @@ interface SceneProps {
   focusedMarker?: GlobeMarker | null;
 }
 
-function Scene({
-  markers,
-  config,
-  onMarkerClick,
-  onMarkerHover,
-  focusedMarker,
-}: SceneProps) {
+function Scene({ markers, config, onMarkerClick, onMarkerHover, focusedMarker }: SceneProps) {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
   const targetPosition = useRef<THREE.Vector3 | null>(null);
@@ -418,11 +412,7 @@ function Scene({
 
   React.useEffect(() => {
     if (focusedMarker) {
-      const dir = latLngToVector3(
-        focusedMarker.lat,
-        focusedMarker.lng,
-        1,
-      ).normalize();
+      const dir = latLngToVector3(focusedMarker.lat, focusedMarker.lng, 1).normalize();
       targetPosition.current = dir.multiplyScalar(config.radius * 3.5);
     } else {
       targetPosition.current = null;
@@ -431,8 +421,17 @@ function Scene({
 
   useFrame(() => {
     if (targetPosition.current) {
-      camera.position.lerp(targetPosition.current, 0.06);
+      // Mientras enfocamos un marcador, apagamos OrbitControls para que no compita
+      // por el control de la cámara -- eso era la causa del salto/crecimiento violento.
+      if (controlsRef.current) controlsRef.current.enabled = false;
+      camera.position.lerp(targetPosition.current, 0.08);
       camera.lookAt(0, 0, 0);
+    } else if (controlsRef.current && !controlsRef.current.enabled) {
+      // Al soltar el hover, resincronizamos OrbitControls con la posición actual
+      // de la cámara antes de reactivarlo, para que no "salte" de vuelta a su
+      // último estado recordado.
+      controlsRef.current.update();
+      controlsRef.current.enabled = true;
     }
   });
 

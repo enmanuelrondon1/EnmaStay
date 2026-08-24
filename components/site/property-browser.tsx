@@ -6,7 +6,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { PropertyCardPublic } from "@/components/site/property-card-public";
 import { PropertyMap } from "@/components/site/property-map-wrapper";
-import { Globe3D, type GlobeMarker } from "@/components/site/property-globe-wrapper";
+import { Pagination } from "@/components/site/pagination";
+import {
+  Globe3D,
+  type GlobeMarker,
+} from "@/components/site/property-globe-wrapper";
 
 type Property = {
   id: string;
@@ -25,10 +29,20 @@ type Property = {
 
 const MAX_COMPARE = 3;
 
-export function PropertyBrowser({ properties }: { properties: Property[] }) {
+export function PropertyBrowser({
+  properties,
+  currentPage,
+  totalPages,
+}: {
+  properties: Property[];
+  currentPage?: number;
+  totalPages?: number;
+}) {
   const [view, setView] = useState<"map" | "globe">("map");
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [selectedMarker, setSelectedMarker] = useState<GlobeMarker | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [selectedMarker, setSelectedMarker] = useState<GlobeMarker | null>(
+    null,
+  );
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
   if (properties.length === 0) {
@@ -61,25 +75,31 @@ export function PropertyBrowser({ properties }: { properties: Property[] }) {
   return (
     <div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {properties.map((property, index) => (
-            <PropertyCardPublic
-              key={property.id}
-              property={property}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              compareSelected={compareIds.includes(property.id)}
-              onCompareToggle={() => toggleCompare(property.id)}
-            />
-          ))}
+        <div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {properties.map((property, index) => (
+              <PropertyCardPublic
+                key={property.id}
+                property={property}
+                onLocate={() => setFocusedIndex(index)}
+                compareSelected={compareIds.includes(property.id)}
+                onCompareToggle={() => toggleCompare(property.id)}
+              />
+            ))}
+          </div>
+          {currentPage !== undefined && totalPages !== undefined && (
+            <Pagination currentPage={currentPage} totalPages={totalPages} />
+          )}
         </div>
 
-        <div className="lg:sticky lg:top-20">
-          <div className="mb-3 flex gap-2">
+        <div className="lg:sticky lg:top-20 lg:flex lg:h-[calc(100vh-6rem)] lg:flex-col">
+          <div className="mb-3 flex shrink-0 gap-2">
             <button
               onClick={() => setView("map")}
               className={`rounded-full px-4 py-1.5 text-sm font-medium ${
-                view === "map" ? "bg-ink text-canvas-soft" : "border border-stone-300 text-ink"
+                view === "map"
+                  ? "bg-ink text-canvas-soft"
+                  : "border border-stone-300 text-ink"
               }`}
             >
               Mapa
@@ -87,21 +107,28 @@ export function PropertyBrowser({ properties }: { properties: Property[] }) {
             <button
               onClick={() => setView("globe")}
               className={`rounded-full px-4 py-1.5 text-sm font-medium ${
-                view === "globe" ? "bg-ink text-canvas-soft" : "border border-stone-300 text-ink"
+                view === "globe"
+                  ? "bg-ink text-canvas-soft"
+                  : "border border-stone-300 text-ink"
               }`}
             >
               Vista global
             </button>
           </div>
 
-          <div className="relative h-[600px] overflow-hidden">
-            {view === "map" ? (
-              <PropertyMap properties={properties} />
-            ) : (
+          <div className="relative h-[400px] flex-1 overflow-hidden lg:h-auto">
+         {view === "map" ? (
+  <PropertyMap
+    properties={properties}
+    focusedPropertyId={focusedIndex !== null ? properties[focusedIndex].id : null}
+  />
+) : (
               <>
                 <Globe3D
                   markers={markers}
-                  focusedMarker={hoveredIndex !== null ? markers[hoveredIndex] : null}
+                  focusedMarker={
+                    focusedIndex !== null ? markers[focusedIndex] : null
+                  }
                   className="h-full"
                   onMarkerClick={(marker) => setSelectedMarker(marker)}
                   config={{
@@ -164,9 +191,17 @@ export function PropertyBrowser({ properties }: { properties: Property[] }) {
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               {compareProperties.map((p) => (
-                <div key={p.id} className="relative h-12 w-16 overflow-hidden rounded-md bg-stone-300/40">
+                <div
+                  key={p.id}
+                  className="relative h-12 w-16 overflow-hidden rounded-md bg-stone-300/40"
+                >
                   {p.images[0] && (
-                    <Image src={p.images[0].url} alt={p.title} fill className="object-cover" />
+                    <Image
+                      src={p.images[0].url}
+                      alt={p.title}
+                      fill
+                      className="object-cover"
+                    />
                   )}
                 </div>
               ))}

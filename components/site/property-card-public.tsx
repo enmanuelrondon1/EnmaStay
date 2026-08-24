@@ -19,8 +19,7 @@ type PropertyCardPublicProps = {
     images: { url: string }[];
     reviews?: { rating: number }[];
   };
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
+  onLocate?: () => void;
   compareSelected?: boolean;
   onCompareToggle?: () => void;
 };
@@ -33,19 +32,16 @@ function formatCoord(lat: number, lng: number) {
 
 export function PropertyCardPublic({
   property,
-  onMouseEnter,
-  onMouseLeave,
+  onLocate,
   compareSelected,
   onCompareToggle,
 }: PropertyCardPublicProps) {
   return (
     <Link
       href={`/propiedades/${property.id}`}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
       className="group block overflow-hidden rounded-lg border border-stone-300 bg-white transition hover:shadow-md"
     >
-      <div className="relative h-44 w-full bg-stone-300/40">
+        <div className="relative h-44 w-full bg-stone-300/40">
         {property.images[0] && (
           <Image
             src={property.images[0].url}
@@ -58,33 +54,14 @@ export function PropertyCardPublic({
           {formatCoord(property.latitude, property.longitude)}
         </span>
         <FavoriteButton propertyId={property.id} />
-        {onCompareToggle && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onCompareToggle();
-            }}
-            className={`absolute right-2 top-11 z-10 flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-medium shadow-sm ${
-              compareSelected
-                ? "bg-brass text-ink"
-                : "bg-white/90 text-ink hover:bg-white"
-            }`}
-          >
-            {compareSelected ? "✓ Comparar" : "+ Comparar"}
-          </button>
-        )}
       </div>
       <div className="p-4">
-        <h3 className="truncate font-display text-lg text-ink">
-          {property.title}
-        </h3>
+        <h3 className="truncate font-display text-lg text-ink">{property.title}</h3>
         <p className="text-sm text-stone-600">
           {property.city}, {property.country}
         </p>
         <p className="mt-1 text-xs text-stone-600">
-          {property.bedrooms} hab · {property.bathrooms} baños ·{" "}
-          {property.parkings} estac.
+          {property.bedrooms} hab · {property.bathrooms} baños · {property.parkings} estac.
         </p>
         <div className="mt-2 flex items-center justify-between">
           <p className="font-mono text-sm font-medium text-brass-dark">
@@ -100,6 +77,39 @@ export function PropertyCardPublic({
             </span>
           )}
         </div>
+
+        {(onCompareToggle || onLocate) && (
+          <div className="mt-3 flex gap-2 border-t border-stone-300 pt-3">
+            {onCompareToggle && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onCompareToggle();
+                }}
+                className={`flex-1 rounded-md py-1.5 text-xs font-medium ${
+                  compareSelected
+                    ? "bg-brass text-ink"
+                    : "border border-stone-300 text-ink hover:bg-canvas-soft"
+                }`}
+              >
+                {compareSelected ? "✓ Comparando" : "+ Comparar"}
+              </button>
+            )}
+            {onLocate && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onLocate();
+                }}
+                className="flex-1 rounded-md border border-stone-300 py-1.5 text-xs font-medium text-ink hover:bg-canvas-soft"
+              >
+                📍 Ubicar
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );
