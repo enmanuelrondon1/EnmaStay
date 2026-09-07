@@ -20,11 +20,12 @@ type PropertyDetailProps = {
     latitude: number;
     longitude: number;
     images: { url: string }[];
-    reviews: {
+       reviews: {
       id: string;
       rating: number;
       comment: string | null;
       createdAt: Date;
+      userId: string;
       user: { name: string | null };
     }[];
   };
