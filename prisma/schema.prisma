@@ -16,20 +16,22 @@ enum Role {
 // prisma/schema.prisma
 
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String     @unique
   emailVerified DateTime?
   image         String?
-  password      String?   // solo para login con Credentials
-  role          Role      @default(USER)
+  password      String? // solo para login con Credentials
+  role          Role       @default(USER)
   bookings      Booking[]
-    favorites Favorite[]
-    reviews   Review[]  
-    
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime  @default(now())
+  favorites     Favorite[]
+  reviews       Review[]
+
+  messages Message[]
+
+  accounts  Account[]
+  sessions  Session[]
+  createdAt DateTime  @default(now())
 }
 
 model Account {
@@ -68,7 +70,7 @@ model VerificationToken {
 }
 
 model Property {
-  id          String          @id @default(cuid())
+  id          String @id @default(cuid())
   title       String
   description String
   price       Int
@@ -79,18 +81,17 @@ model Property {
   bathrooms   Int
   parkings    Int
 
-  latitude    Float
-  longitude   Float
-  location    Unsupported("geography(Point, 4326)")?
+  latitude  Float
+  longitude Float
+  location  Unsupported("geography(Point, 4326)")?
 
-  images      PropertyImage[]
-  bookings    Booking[]
-    favorites Favorite[]
-    reviews   Review[]
-    
+  images    PropertyImage[]
+  bookings  Booking[]
+  favorites Favorite[]
+  reviews   Review[]
 
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([city])
 }
@@ -110,21 +111,22 @@ enum BookingStatus {
 }
 
 model Booking {
-  id              String        @id @default(cuid())
-  propertyId      String
-  property        Property      @relation(fields: [propertyId], references: [id])
-  userId          String
-  user            User          @relation(fields: [userId], references: [id])
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
 
-  checkIn         DateTime
-  checkOut        DateTime
-  totalPrice      Int
-  status          BookingStatus @default(PENDING)
+  checkIn    DateTime
+  checkOut   DateTime
+  totalPrice Int
+  status     BookingStatus @default(PENDING)
 
-  stripeSessionId String?       @unique
-   review          Review?
+  stripeSessionId String?   @unique
+  review          Review?
+  messages        Message[]
 
-  createdAt       DateTime      @default(now())
+  createdAt DateTime @default(now())
 
   @@index([propertyId, checkIn, checkOut])
 }
@@ -142,17 +144,29 @@ model Favorite {
 }
 
 model Review {
-  id        String   @id @default(cuid())
-  rating    Int
-  comment   String?
-  userId    String
+  id         String   @id @default(cuid())
+  rating     Int
+  comment    String?
+  userId     String
   propertyId String
-  bookingId String   @unique
-  createdAt DateTime @default(now())
+  bookingId  String   @unique
+  createdAt  DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([propertyId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([bookingId])
 }

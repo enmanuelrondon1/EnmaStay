@@ -29,7 +29,7 @@ export default async function MiCuentaPage() {
         Hola {session.user.name ?? session.user.email}, aquí está el historial de tus reservas.
       </p>
 
-      <BookingList bookings={bookings} />
+            <BookingList bookings={bookings} currentUserId={session.user.id} />
     </div>
   );
 }

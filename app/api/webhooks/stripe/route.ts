@@ -4,9 +4,11 @@ import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import type Stripe from "stripe";
-import { resend } from "@/lib/resend";
+import { sendEmail } from "@/lib/mailer";
+import { render } from "@react-email/render";
 import { BookingConfirmationEmail } from "@/lib/emails/booking-confirmation-email";
 import { AdminNewBookingEmail } from "@/lib/emails/admin-new-booking-email";
+
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -50,12 +52,9 @@ if (event.type === "checkout.session.completed") {
       year: "numeric",
     });
 
-    try {
-      await resend.emails.send({
-        from: "EnmaStay <onboarding@resend.dev>",
-        to: booking.user.email,
-        subject: `Reserva confirmada: ${booking.property.title}`,
-        react: BookingConfirmationEmail({
+     try {
+      const guestHtml = await render(
+        BookingConfirmationEmail({
           guestName: booking.user.name ?? "huésped",
           propertyTitle: booking.property.title,
           city: booking.property.city,
@@ -64,15 +63,18 @@ if (event.type === "checkout.session.completed") {
           checkOut: dateFormatter.format(booking.checkOut),
           totalPrice: booking.totalPrice,
           imageUrl: booking.property.images[0]?.url,
-        }),
+        })
+      );
+
+      await sendEmail({
+        to: booking.user.email,
+        subject: `Reserva confirmada: ${booking.property.title}`,
+        html: guestHtml,
       });
 
       if (process.env.ADMIN_NOTIFICATION_EMAIL) {
-        await resend.emails.send({
-          from: "EnmaStay <onboarding@resend.dev>",
-          to: process.env.ADMIN_NOTIFICATION_EMAIL,
-          subject: `Nueva reserva: ${booking.property.title}`,
-          react: AdminNewBookingEmail({
+        const adminHtml = await render(
+          AdminNewBookingEmail({
             guestName: booking.user.name ?? "Huésped sin nombre",
             guestEmail: booking.user.email,
             propertyTitle: booking.property.title,
@@ -80,12 +82,18 @@ if (event.type === "checkout.session.completed") {
             checkIn: dateFormatter.format(booking.checkIn),
             checkOut: dateFormatter.format(booking.checkOut),
             totalPrice: booking.totalPrice,
-          }),
+          })
+        );
+
+        await sendEmail({
+          to: process.env.ADMIN_NOTIFICATION_EMAIL,
+          subject: `Nueva reserva: ${booking.property.title}`,
+          html: adminHtml,
         });
       }
     } catch (emailError) {
       console.error("Error al enviar email de confirmación:", emailError);
-    } 
+    }
   }
 }
 

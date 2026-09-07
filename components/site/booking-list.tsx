@@ -7,6 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ReviewForm } from "@/components/site/review-form";
+import { EditDatesModal } from "@/components/site/edit-dates-modal";
+import { BookingChat } from "@/components/site/booking-chat";
 
 type Booking = {
   id: string;
@@ -24,7 +26,6 @@ type Booking = {
   };
 };
 
-
 const dateFormatter = new Intl.DateTimeFormat("es", {
   day: "numeric",
   month: "short",
@@ -40,9 +41,17 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   CANCELLED: { label: "Cancelada", className: "bg-red-100 text-red-600" },
 };
 
-export function BookingList({ bookings }: { bookings: Booking[] }) {
+export function BookingList({
+  bookings,
+  currentUserId,
+}: {
+  bookings: Booking[];
+  currentUserId: string;
+}) {
   const router = useRouter();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [chatBookingId, setChatBookingId] = useState<string | null>(null);
 
   async function handleCancel(id: string) {
     if (
@@ -143,13 +152,29 @@ export function BookingList({ bookings }: { bookings: Booking[] }) {
                   <p className="font-mono text-sm font-medium text-brass-dark">
                     ${booking.totalPrice}
                   </p>
+                  {canCancel && booking.status === "CONFIRMED" && (
+                    <button
+                      onClick={() => setEditingBooking(booking)}
+                      className="text-xs font-medium text-teal hover:underline"
+                    >
+                      Editar fechas
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setChatBookingId(booking.id)}
+                    className="text-xs font-medium text-teal hover:underline"
+                  >
+                    Mensajes
+                  </button>
                   {canCancel && (
                     <button
                       onClick={() => handleCancel(booking.id)}
                       disabled={cancellingId === booking.id}
                       className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
                     >
-                      {cancellingId === booking.id ? "Cancelando..." : "Cancelar"}
+                      {cancellingId === booking.id
+                        ? "Cancelando..."
+                        : "Cancelar"}
                     </button>
                   )}
                 </div>
@@ -162,6 +187,36 @@ export function BookingList({ bookings }: { bookings: Booking[] }) {
           </div>
         );
       })}
+      {editingBooking && (
+        <EditDatesModal
+          bookingId={editingBooking.id}
+          currentCheckIn={new Date(editingBooking.checkIn)}
+          currentCheckOut={new Date(editingBooking.checkOut)}
+          nights={Math.round(
+            (new Date(editingBooking.checkOut).getTime() -
+              new Date(editingBooking.checkIn).getTime()) /
+              (1000 * 60 * 60 * 24),
+          )}
+          onClose={() => setEditingBooking(null)}
+        />
+      )}
+
+            {chatBookingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="font-display text-lg text-ink">Mensajes</h3>
+              <button
+                onClick={() => setChatBookingId(null)}
+                className="text-sm text-stone-500 hover:text-ink"
+              >
+                Cerrar
+              </button>
+            </div>
+            <BookingChat bookingId={chatBookingId} currentUserId={currentUserId} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
