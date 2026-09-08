@@ -19,9 +19,18 @@ export async function POST(req: Request) {
   }
 
   const structuredData = message.analysis?.structuredData;
-  const leadData = structuredData?.interes_visitante_enmastay;
+  if (!structuredData) {
+    return NextResponse.json({ received: true });
+  }
+
+  const entry = Object.values(structuredData).find(
+    (item: any) => item?.name === "interes_visitante_enmastay"
+  ) as { result?: Record<string, string> } | undefined;
+
+  const leadData = entry?.result;
 
   if (!leadData?.propertyId) {
+    console.warn("Structured data sin propertyId:", structuredData);
     return NextResponse.json({ received: true });
   }
 
