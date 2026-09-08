@@ -4,6 +4,7 @@ import { PropertyMap } from "@/components/site/property-map-wrapper";
 import { BookingCalendar } from "@/components/site/booking-calendar";
 import { FavoriteButton } from "@/components/site/favorite-button";
 import { PropertyReviews } from "@/components/site/property-reviews";
+import { PropertyVoiceAssistant } from "@/components/site/property-voice-assistant";
 
 type PropertyDetailProps = {
   property: {
@@ -30,13 +31,11 @@ type PropertyDetailProps = {
     }[];
   };
 };
-
 function formatCoord(lat: number, lng: number) {
   const latDir = lat >= 0 ? "N" : "S";
   const lngDir = lng >= 0 ? "E" : "W";
   return `${Math.abs(lat).toFixed(3)}°${latDir} ${Math.abs(lng).toFixed(3)}°${lngDir}`;
 }
-
 export function PropertyDetail({ property }: PropertyDetailProps) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -48,12 +47,10 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
         {formatCoord(property.latitude, property.longitude)} ·{" "}
         {property.address}
       </p>
-
       <div className="relative mt-6">
         <PropertyGallery images={property.images} title={property.title} />
         <FavoriteButton propertyId={property.id} />
       </div>
-
       <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="flex gap-6 border-b border-stone-300 pb-6 text-sm text-stone-600">
@@ -61,12 +58,10 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             <span>{property.bathrooms} baños</span>
             <span>{property.parkings} estacionamientos</span>
           </div>
-
           <h2 className="mt-6 font-display text-xl text-ink">Descripción</h2>
           <p className="mt-2 leading-relaxed text-stone-600">
             {property.description}
           </p>
-
           <h2 className="mt-8 font-display text-xl text-ink">Ubicación</h2>
           <div className="mt-3 h-72 w-full">
             <PropertyMap
@@ -86,7 +81,6 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
           <h2 className="mt-8 font-display text-xl text-ink">Reseñas</h2>
           <PropertyReviews reviews={property.reviews} />
         </div>
-
         <div className="lg:col-span-1">
           <div className="sticky top-24 rounded-lg border border-stone-300 bg-white p-4">
             <p className="font-mono text-2xl font-medium text-brass-dark">
@@ -105,6 +99,16 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
           </div>
         </div>
       </div>
+      <PropertyVoiceAssistant
+        propertyId={property.id}
+        title={property.title}
+        price={property.price}
+        city={property.city}
+        country={property.country}
+        bedrooms={property.bedrooms}
+        bathrooms={property.bathrooms}
+        description={property.description}
+      />
     </div>
   );
 }

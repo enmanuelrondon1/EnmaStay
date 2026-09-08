@@ -85,10 +85,11 @@ model Property {
   longitude Float
   location  Unsupported("geography(Point, 4326)")?
 
-  images    PropertyImage[]
-  bookings  Booking[]
-  favorites Favorite[]
-  reviews   Review[]
+  images     PropertyImage[]
+  bookings   Booking[]
+  favorites  Favorite[]
+  reviews    Review[]
+  voiceLeads VoiceLead[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -169,4 +170,24 @@ model Message {
   createdAt DateTime @default(now())
 
   @@index([bookingId])
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+model VoiceLead {
+  id            String     @id @default(cuid())
+  propertyId    String
+  property      Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name          String?
+  contact       String?
+  preferredTime String?
+  notes         String?
+  status        LeadStatus @default(NEW)
+  createdAt     DateTime   @default(now())
+
+  @@index([propertyId])
 }
