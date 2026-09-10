@@ -16,6 +16,18 @@ async function fetchStructuredDataWithRetry(
       const res = await fetch(`https://api.vapi.ai/call/${callId}`, {
         headers: { Authorization: `Bearer ${process.env.VAPI_PRIVATE_KEY}` },
       });
+
+      if (i === 0) {
+        // LOG TEMPORAL: solo en el primer intento, para ver la forma real del JSON
+        const rawText = await res.text();
+        console.log(`[VAPI WEBHOOK] DEBUG - status: ${res.status}`);
+        console.log(`[VAPI WEBHOOK] DEBUG - raw response: ${rawText}`);
+        const data = JSON.parse(rawText);
+        const sd = data?.analysis?.structuredData;
+        if (sd) return sd;
+        continue;
+      }
+
       if (!res.ok) {
         console.log(`[VAPI WEBHOOK] Retry ${i + 1}: API respondió ${res.status}`);
         continue;
@@ -57,6 +69,7 @@ export async function POST(req: Request) {
   if (!structuredData) {
     console.log("[VAPI WEBHOOK] No hay structuredData en el reporte, reintentando contra la API...");
     const callId = message.call?.id;
+    console.log("[VAPI WEBHOOK] DEBUG - callId:", callId);
     if (callId) {
       structuredData = await fetchStructuredDataWithRetry(callId);
     }
