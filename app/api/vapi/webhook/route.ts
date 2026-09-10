@@ -5,6 +5,35 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
 import { AdminNewLeadEmail } from "@/lib/emails/admin-new-lead-email";
 
+async function fetchStructuredDataWithRetry(
+  callId: string,
+  retries = 4,
+  delayMs = 2500
+) {
+  for (let i = 0; i < retries; i++) {
+    await new Promise((r) => setTimeout(r, delayMs));
+    try {
+      const res = await fetch(`https://api.vapi.ai/call/${callId}`, {
+        headers: { Authorization: `Bearer ${process.env.VAPI_PRIVATE_KEY}` },
+      });
+      if (!res.ok) {
+        console.log(`[VAPI WEBHOOK] Retry ${i + 1}: API respondió ${res.status}`);
+        continue;
+      }
+      const data = await res.json();
+      const sd = data?.analysis?.structuredData;
+      if (sd) {
+        console.log(`[VAPI WEBHOOK] structuredData obtenido en retry ${i + 1}`);
+        return sd;
+      }
+      console.log(`[VAPI WEBHOOK] Retry ${i + 1}: aún sin structuredData`);
+    } catch (err) {
+      console.error(`[VAPI WEBHOOK] Retry ${i + 1} falló:`, err);
+    }
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
   const secret = req.headers.get("x-vapi-secret");
   if (secret !== process.env.VAPI_WEBHOOK_SECRET) {
@@ -23,11 +52,20 @@ export async function POST(req: Request) {
 
   console.log("[VAPI WEBHOOK] Es end-of-call-report, procesando...");
 
-  const structuredData = message.analysis?.structuredData;
+  let structuredData = message.analysis?.structuredData;
+
+  if (!structuredData) {
+    console.log("[VAPI WEBHOOK] No hay structuredData en el reporte, reintentando contra la API...");
+    const callId = message.call?.id;
+    if (callId) {
+      structuredData = await fetchStructuredDataWithRetry(callId);
+    }
+  }
+
   console.log("[VAPI WEBHOOK] structuredData:", JSON.stringify(structuredData));
 
   if (!structuredData) {
-    console.log("[VAPI WEBHOOK] No hay structuredData");
+    console.log("[VAPI WEBHOOK] No hay structuredData tras reintentos, abandonando");
     return NextResponse.json({ received: true });
   }
 
