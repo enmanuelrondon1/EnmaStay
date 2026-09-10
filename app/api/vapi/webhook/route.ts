@@ -5,47 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
 import { AdminNewLeadEmail } from "@/lib/emails/admin-new-lead-email";
 
-async function fetchStructuredDataWithRetry(
-  callId: string,
-  retries = 4,
-  delayMs = 2500
-) {
-  for (let i = 0; i < retries; i++) {
-    await new Promise((r) => setTimeout(r, delayMs));
-    try {
-      const res = await fetch(`https://api.vapi.ai/call/${callId}`, {
-        headers: { Authorization: `Bearer ${process.env.VAPI_PRIVATE_KEY}` },
-      });
-
-      if (i === 0) {
-        // LOG TEMPORAL: solo en el primer intento, para ver la forma real del JSON
-        const rawText = await res.text();
-        console.log(`[VAPI WEBHOOK] DEBUG - status: ${res.status}`);
-        console.log(`[VAPI WEBHOOK] DEBUG - raw response: ${rawText}`);
-        const data = JSON.parse(rawText);
-        const sd = data?.analysis?.structuredData;
-        if (sd) return sd;
-        continue;
-      }
-
-      if (!res.ok) {
-        console.log(`[VAPI WEBHOOK] Retry ${i + 1}: API respondió ${res.status}`);
-        continue;
-      }
-      const data = await res.json();
-      const sd = data?.analysis?.structuredData;
-      if (sd) {
-        console.log(`[VAPI WEBHOOK] structuredData obtenido en retry ${i + 1}`);
-        return sd;
-      }
-      console.log(`[VAPI WEBHOOK] Retry ${i + 1}: aún sin structuredData`);
-    } catch (err) {
-      console.error(`[VAPI WEBHOOK] Retry ${i + 1} falló:`, err);
-    }
-  }
-  return null;
-}
-
 export async function POST(req: Request) {
   const secret = req.headers.get("x-vapi-secret");
   if (secret !== process.env.VAPI_WEBHOOK_SECRET) {
@@ -64,21 +23,14 @@ export async function POST(req: Request) {
 
   console.log("[VAPI WEBHOOK] Es end-of-call-report, procesando...");
 
-  let structuredData = message.analysis?.structuredData;
-
-  if (!structuredData) {
-    console.log("[VAPI WEBHOOK] No hay structuredData en el reporte, reintentando contra la API...");
-    const callId = message.call?.id;
-    console.log("[VAPI WEBHOOK] DEBUG - callId:", callId);
-    if (callId) {
-      structuredData = await fetchStructuredDataWithRetry(callId);
-    }
-  }
+  // Vapi v4 guarda los datos extraídos en artifact.structuredOutputs,
+  // no en analysis.structuredData (eso era de la versión legacy).
+  const structuredData = message.artifact?.structuredOutputs;
 
   console.log("[VAPI WEBHOOK] structuredData:", JSON.stringify(structuredData));
 
   if (!structuredData) {
-    console.log("[VAPI WEBHOOK] No hay structuredData tras reintentos, abandonando");
+    console.log("[VAPI WEBHOOK] No hay structuredOutputs en el reporte");
     return NextResponse.json({ received: true });
   }
 
